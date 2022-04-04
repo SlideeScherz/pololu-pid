@@ -131,7 +131,7 @@ void readUltrasonic()
 
     //fetch from US, and get a moving avg from data
     data.calcRollingAvg(us.getPingDistance(), us.getPingsSent());
-
+    
     // mark this routine as complete
     if (us.getPingsSent() >= PINGS_PER_ANGLE)
     {
@@ -157,7 +157,7 @@ void filterData()
     distances[servoData.getPosition()] = data.getAvgDistance();
 
     //after we store the avg clear the members
-    data.resetRollingAvg();
+    //data.resetRollingAvg();
 
     // side pid corrections
     sidePID.setCurrentError(distances[0], TGT_DISTANCES[0]);
@@ -178,6 +178,7 @@ void filterData()
   }
 }
 
+//WHEELS ARE FLIPPED
 void setMotorsSpeeds()
 {
   motorTimer1 = millis();
@@ -185,14 +186,23 @@ void setMotorsSpeeds()
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
     if (left1Correction < 0)
-      motors.setSpeeds(MIN_SPEED, MIN_SPEED + 10);
+    {
+      leftSpeed++;
+      rightSpeed = MIN_SPEED;
+    }
     else
-      motors.setSpeeds(MIN_SPEED + 10, MIN_SPEED);
+    {
+      leftSpeed = MIN_SPEED;
+      rightSpeed++;
+    }
 
     //too close, turn 
     if (fwdCorrection > 0)
-      motors.setSpeeds(leftSpeed++ , rightSpeed = MIN_SPEED);
-
+    {
+      leftSpeed = MIN_SPEED;
+      rightSpeed++;
+    }
+    motors.setSpeeds(leftSpeed, rightSpeed);
     motorTimer2 = motorTimer1;
   }
 }
