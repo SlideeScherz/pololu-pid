@@ -14,19 +14,16 @@ ServoData::ServoData(bool debug, unsigned long period, int pin) :
 {
   bDebug = debug;
   sweepingCW = true;
-  _position = 3;
+  _position = 0;
 
-  _angle = headPositions[_position];
+  _angle = HEAD_POSITIONS[_position];
 }
 
 // accesser for _angle 
 float ServoData::getAngle() { return _angle; }
 
 // accesser for _position
-float ServoData::getPosition()
-{
-    return _position;
-}
+int ServoData::getPosition() { return _position; }
 
 /**
  * Simple controller to move head
@@ -44,7 +41,7 @@ void ServoData::sweepHead()
   _position = (sweepingCW) ? _position++ : _position--;
   
   //update the currentAngle
-  _angle = headPositions[_position];
+  _angle = HEAD_POSITIONS[_position];
 }
 
 //Output Data to serial monitor

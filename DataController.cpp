@@ -13,10 +13,7 @@ DataController::DataController(bool debug, float period) : PERIOD(period)
 }
 
 // member accesser 
-float DataController::getAvgDistance()
-{
-  return _avgDistance;
-}
+float DataController::getAvgDistance() { return _avgDistance; }
 
 //set _avgDistance and accDistance to 0
 void DataController::resetRollingAvg()
@@ -41,19 +38,3 @@ void DataController::calcRollingAvg(float data, int dataLen)
   //get rolling average 
   _avgDistance = distanceAcc / dataLen;
 }
-
-// accesser for allDistances
-float DataController::allDistancesRead(int atIndex)
-{
-  return allDistances[atIndex];
-}
-
-// modifier for allDistances
-void DataController::allDistancesWrite(float data, int atIndex)
-{
-  allDistances[atIndex] = data;
-}
-
-void DataController::setStatus(int status) { _status = status; }
-
-int DataController::getStatus() { return _status; }

@@ -18,10 +18,10 @@ using namespace Pololu3piPlus32U4;
 
 /* global data */
 
-extern constexpr int POS_LEN = 7;
-extern constexpr float MAX_DISTANCE = 200.0f;
-extern constexpr float US_MIN_DISTANCE = 2.0f;
-extern constexpr int PINGS_PER_ANGLE = 20;
+constexpr int POS_LEN = 7;
+constexpr int PINGS_PER_ANGLE = 20;
+constexpr float MAX_DISTANCE = 200.0f;
+constexpr float US_MIN_DISTANCE = 2.0f;
 
 Ultrasonic us(true, 1L, 22, 21);
 DataController data(false, 100L);
@@ -30,13 +30,11 @@ PID sidePID(false, 60L); // period a bit after ping
 PID fwdPID(false, 100L); // period a bit after ping
 
 /* These are only for data. Dont manipulate any hardware */
-ServoData servoData(false, 20L, 20);
+ServoData servoData(false, 100L, 20);
 WheelData wheels(false, 100L);
 
-enum eStatus { WAITING, READY, DONE };
-
 //scheduler timer. time at the start of the cycle. Updated when all routines finished
-unsigned long s_t1 = 0L;
+unsigned long t1 = 0L;
 
 /* environment data */
 
@@ -46,36 +44,47 @@ enum eWall { NONE, LEFT, CENTER, RIGHT};
 // target distances in respect to the angles in servo.headPositions[]
 const float TGT_DISTANCES[POS_LEN] = { 80.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f , 0.0f };
 
+// container for last average distance of each angle
+float distances[POS_LEN] = { };
+
+// container for the error of each angle
+float errors[POS_LEN] = { };
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(9600); 
   Serial.println(); //newline
 
-  us.setStatus(eStatus::WAITING);
-  us.setPingsSent(0);
-
-  checkBatteries();
+  servoData.ready = true;
+  us.ready = false;
 }
 
 // the loop function runs over and over again until power down or reset
+// choose which routine to run based on time elapsed since start of cycle
 void loop() {
 
-  scheduler();
-
-}
-
-/*
- * Chose which routine to run based on time elapsed since start of cycle
- * @returns void. Scheduler will call the correct method
- */
-void scheduler()
-{
   //get current time
-  s_t1 = millis();
+  t1 = millis();
+
+  // poll servo
+  if (servoData.ready)
+  {
+    servoData.sweepHead();
+    //headServo.write(angle);
+
+    servoData.t2 = t1;
+
+    //allow servo to finish its sweep
+    if (t1 > servoData.t2 + servoData.PERIOD)
+    {
+      servoData.ready = false;
+      us.ready = true;
+    }
+  }
 
   //send one ping, write to correct index
-  //If servo is moving, it will set ultrasonic status to waiting
-  if (s_t1 > us.t2 + us.PERIOD && us.getStatus() == eStatus::READY)
+  //if servo is moving, it will set ultrasonic status to waiting
+  else if (t1 > us.t2 + us.PERIOD && us.ready)
   {
     //send ping
     us.setPingDistance();
@@ -83,38 +92,37 @@ void scheduler()
     //fetch from US, and get a moving avg from data
     data.calcRollingAvg(us.getPingDistance(), us.getPingsSent());
 
-    //check if complete
-    if (us.getPingsSent() >= PINGS_PER_ANGLE)
-    {
-      us.setPingsSent(0);
-      us.setStatus(eStatus::DONE);
-      data.setStatus(eStatus::READY);
-    }
-
     //store last time ran
-    us.t2 = s_t1;
+    us.t2 = t1;
 
     if (us.bDebug) us.debug();
   }
 
-  //after all pings have sent, check and set status
-  else if (s_t1 > data.t2 + data.PERIOD && data.getStatus() == eStatus::READY)
+  // after all pings have sent, write the average to the array
+  if (us.getPingsSent() >= PINGS_PER_ANGLE)
   {
-    //push to allDistances Arr and reset
-    data.allDistancesWrite(data.getAvgDistance(), servoData.getPosition());
+    us.setPingsSent(0);
+    us.ready = false;
+
+    //push to distances Arr and reset
+    distances[servoData.getPosition()] = data.getAvgDistance();
     data.resetRollingAvg();
-
-    data.setStatus(eStatus::DONE);
   }
 
-  //PID correction
-  else if (s_t1 > sidePID.PERIOD);
-  {
+  // pick side or front pid
 
-  }
+  // determine pid correction
+  // calculate the current error
+  sidePID.setCurrentError(distances[servoData.getPosition()], TGT_DISTANCES[servoData.getPosition()]);
 
-  
+  // store in error array 
+  errors[servoData.getPosition()] = sidePID.getCurrentError();
+
+  // get pid correction
+  sidePID.calculatePID(errors[servoData.getPosition()]);
+
 }
+
 
 /*
  * set the LEDS to on or off.
@@ -125,11 +133,4 @@ extern void setLEDs(int yellowState, int greenState, int redState) {
   ledYellow(yellowState);
   ledGreen(greenState);
   ledRed(redState);
-}
-
-//Abort if battery low
-void checkBatteries()
-{
-  Serial.print("[Batteries] ");
-  Serial.println(readBatteryMillivolts());
 }

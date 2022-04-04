@@ -14,13 +14,15 @@
 Ultrasonic::Ultrasonic(bool debug, unsigned long period, int triggerPin, int echoPin) :
   PERIOD(period), TRIG_PIN(triggerPin), ECHO_PIN(echoPin)
 {
+  bDebug = debug;
+
   //assign pins to I/O
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
   //set defaults
   t2 = 0L;
-  bDebug = debug;
+  _pingsSent = 0;
 }
 
 // call sendPing and assign the distance to pingDistance
@@ -28,12 +30,6 @@ void Ultrasonic::setPingDistance() { _pingDistance = sendPing(); }
 
 // access private member ping distance
 float Ultrasonic::getPingDistance() { return _pingDistance; }
-
-// public modifier
-void Ultrasonic::setStatus(int value) { _status = value; }
-
-//public acesser
-int Ultrasonic::getStatus() { return _status; }
 
 // public modifier
 void Ultrasonic::setPingsSent(int value) { _pingsSent = value; }

@@ -14,17 +14,18 @@ class PID
 {
 public:
 
+  bool bDebug, ready;
+
   //interval period
   const unsigned long PERIOD;
-
-  //if enabled, will output to serial monitor
-  bool bDebug;
 
   PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f, float kI_Limit = 500.0f);
 
   float calculatePID(float currentError);
 
   void setCurrentError(float currentState, float targetState);
+
+  float getCurrentError();
 
   void debug();
 

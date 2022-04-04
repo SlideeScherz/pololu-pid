@@ -15,8 +15,9 @@
 PID::PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f, float kI_Limit = 500.0f) :
   PERIOD(period), KP(kP), KI(kI), KD(kD), KI_LIMIT(kI_Limit)
 {
-  //default initializers
-  bDebug = false;
+  bDebug = debug;
+ 
+  // defaults 
   _currentError = 0.0f;
   prevError = 0.0f;
 }
@@ -48,6 +49,8 @@ void PID::setCurrentError(float currentState, float targetState)
   _currentError = targetState - currentState;
 }
 
+float PID::getCurrentError() { return _currentError; }
+
 // output state to serial monitor
 void PID::debug()
 {
@@ -75,18 +78,15 @@ void PID::debug()
  * @param currentError current error passed in from setCurrentError
  * @returns void. Set the prevError private member
  */
-void PID::setPrevError(float currentError)
-{
-  prevError = currentError;
-}
+void PID::setPrevError(float currentError) { prevError = currentError; }
 
-//set the proportional error from the current error
+// set the proportional error from the current error
 void PID::setProportional(float currentError)
 {
   proportional = KP * currentError;
 }
 
-//manage steady state error with the integral
+// manage steady state error with the integral
 void PID::setIntegral(float currentError)
 {
   KI_total += currentError;
@@ -94,7 +94,7 @@ void PID::setIntegral(float currentError)
   integral = KI * KI_total;
 }
 
-//get the delta of the last two errors to account for future error
+// get the delta of the last two errors to account for future error
 void PID::setDerivative(float currentError, float prevError)
 {
   //store the last error after!

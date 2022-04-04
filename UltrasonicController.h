@@ -14,8 +14,7 @@ class Ultrasonic
 {
 public:
 
-  //if enabled, will output to serial monitor
-  bool bDebug;
+  bool bDebug, ready;
 
   // milliseconds interval for scheduler
   const unsigned long PERIOD; 
@@ -25,16 +24,12 @@ public:
 
   // scheduler data. last time ran 
   unsigned long t2; 
-  
+ 
   Ultrasonic(bool debug, unsigned long period, int triggerPin, int echoPin);
 
   void setPingDistance();
 
   float getPingDistance();
-
-  void setStatus(int value);
-
-  int getStatus();
 
   void setPingsSent(int value);
 
@@ -45,7 +40,7 @@ public:
 private:
 
   // scheduler data
-  int _status, _pingsSent; 
+  int _pingsSent; 
 
   //round trip distance of a ping derived from timeDiration, in CM
   float _pingDistance;

@@ -16,17 +16,18 @@ public:
   // hardware pin assignment
   const int PIN;
 
+  unsigned long t2;
+
   // frequency between sweeps
   const unsigned long PERIOD;
 
-  // output to serial 
-  bool bDebug;
+  bool bDebug, ready;
 
   ServoData(bool debug, unsigned long period, int pin);
 
   float getAngle();
 
-  float getPosition();
+  int getPosition();
 
   void sweepHead();
 
@@ -38,11 +39,9 @@ private:
   // iterator for HeadPositions array
   int _position;
 
-  //len of array 
-  const int headPositionsLen = 7;
-
+  //HACK Import global const
   //legal head positions (angles) servo can point
-  const float headPositions[7] = { 135.0f, 120.0f, 105.0f, 90.0f, 75.0f, 60.0f, 45.0f };
+  const float HEAD_POSITIONS[7] = { 135.0f, 120.0f, 105.0f, 90.0f, 75.0f, 60.0f, 45.0f };
 
   //direction servo is sweeping
   bool sweepingCW;
