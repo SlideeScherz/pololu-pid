@@ -36,9 +36,6 @@
     <ClInclude Include="UltrasonicController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WheelData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataController.cpp">
@@ -51,9 +48,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UltrasonicController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WheelData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

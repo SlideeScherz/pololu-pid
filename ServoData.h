@@ -25,7 +25,7 @@ public:
 
   ServoData(bool debug, unsigned long period, int pin);
 
-  float getAngle();
+  int getAngle();
 
   int getPosition();
 
@@ -43,7 +43,7 @@ private:
 
   //HACK Import global const
   //legal head positions (angles) servo can point
-  const float HEAD_POSITIONS[7] = { 135.0f, 120.0f, 105.0f, 90.0f, 75.0f, 60.0f, 45.0f };
+  const int HEAD_POSITIONS[7] = { 135, 120, 105, 90, 75, 60, 45 };
 
   //direction servo is sweeping
   bool sweepingCW;

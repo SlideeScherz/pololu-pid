@@ -20,7 +20,7 @@ ServoData::ServoData(bool debug, unsigned long period, int pin) :
 }
 
 // accesser for _angle 
-float ServoData::getAngle() { return _angle; }
+int ServoData::getAngle() { return _angle; }
 
 // accesser for _position
 int ServoData::getPosition() { return _position; }
@@ -32,14 +32,22 @@ int ServoData::getPosition() { return _position; }
  */
 void ServoData::sweepHead()
 {
-  //HACK make this dynamic
-  //check sweep bounds
-  if (_position == 6 || _position == 0)
-    sweepingCW = !sweepingCW;
+  //algo to cycle through photos i used in a react.js project
+  //once we hit max, "bounce" the other way
+  //start 3. 4, 5, 6, then toggle
+  //after 1st pass: start 0. 1, 2, 3, 4, 5, 6 then toggle
+  if (sweepingCW)
+  {
+    _position = (7 + _position + 1) % 7;
+    if (_position == 6) sweepingCW = !sweepingCW;
+  }
+  //start 6. 5, 4, 3, 2, 1, 0 then toggle
+  else
+  {
+    _position = (7 + _position - 1) % 7;
+    if (_position == 0) sweepingCW = !sweepingCW;
+  }
 
-  //increment if moving right, else decrement
-  _position = (sweepingCW) ? _position++ : _position--;
-  
   //update the currentAngle
   _angle = HEAD_POSITIONS[_position];
 }
