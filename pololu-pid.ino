@@ -112,7 +112,7 @@ void setServo()
   // delay to allow servo to finish its sweep, and delay before calling ping
   else if (servoTimer1 > (servoTimer2 + servoData.PERIOD) && servoData.waiting)
   {
-    servoData.debug();
+    //servoData.debug();
     
     servoData.waiting = false;
     us.ready = true;
@@ -141,7 +141,7 @@ void readUltrasonic()
       us.ready = false;
       data.ready = true;
 
-      us.debug();
+      //us.debug();
     }
 
     //store last time ran
@@ -171,10 +171,10 @@ void filterData()
     data.ready = false;
     servoData.ready = true;
 
-    data.debug();
-    sidePID.debug();
-    fwdPID.debug();
-    debugDistances();
+    //data.debug();
+    //sidePID.debug();
+    //fwdPID.debug();
+    //debugDistances();
   }
 }
 
