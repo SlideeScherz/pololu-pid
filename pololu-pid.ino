@@ -33,7 +33,7 @@ Motors motors;
 Ultrasonic us(false, 1L, 22, 21);
 DataController data(false, 100L);
 
-PID sidePID(false, 60L, 9.0f, 0.05f, 3.0f); // period a bit after ping
+PID sidePID(false, 60L, 9.0f); // period a bit after ping
 PID fwdPID(false, 100L); // period a bit after ping
 
 /* These are only for data. Dont manipulate any hardware */
@@ -45,7 +45,7 @@ unsigned long usTimer1 = 0L, usTimer2 = 0L;
 unsigned long motorTimer1 = 0L, motorTimer2 = 0L;
 
 //motor data
-const unsigned long MOTOR_PERIOD = 100L;
+const unsigned long MOTOR_PERIOD = 20L;
 const int MIN_SPEED = 40;
 const int MAX_SPEED = 100;
 int leftSpeed = MIN_SPEED, rightSpeed = MIN_SPEED;
@@ -126,7 +126,6 @@ void readUltrasonic()
   //send one ping, write to correct index
   if (usTimer1 > usTimer2 + us.PERIOD && us.ready)
   {
-
     //send ping
     us.setPingDistance();
 
@@ -164,9 +163,6 @@ void filterData()
     sidePID.setCurrentError(distances[0], TGT_DISTANCES[0]);
     left1Correction = sidePID.calculatePID(sidePID.getCurrentError());
 
-    sidePID.setCurrentError(distances[1], TGT_DISTANCES[1]);
-    left2Correction = sidePID.calculatePID(sidePID.getCurrentError());
-
     // fwd pid correction
     fwdPID.setCurrentError(distances[4], TGT_DISTANCES[4]);
     fwdCorrection = fwdPID.calculatePID(fwdPID.getCurrentError());
@@ -189,10 +185,14 @@ void setMotorsSpeeds()
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
     if (left1Correction < 0)
-      motors.setSpeeds(leftSpeed++, rightSpeed);
+      motors.setSpeeds(MIN_SPEED, MIN_SPEED + 10);
     else
-      motors.setSpeeds(leftSpeed, rightSpeed++);
-  
+      motors.setSpeeds(MIN_SPEED + 10, MIN_SPEED);
+
+    //too close, turn 
+    if (fwdCorrection > 0)
+      motors.setSpeeds(leftSpeed++ , rightSpeed = MIN_SPEED);
+
     motorTimer2 = motorTimer1;
   }
 }
