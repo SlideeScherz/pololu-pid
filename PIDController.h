@@ -14,7 +14,7 @@ class PID
 {
 public:
 
-  bool bDebug, ready;
+  bool bDebug;
 
   //interval period
   const unsigned long PERIOD;

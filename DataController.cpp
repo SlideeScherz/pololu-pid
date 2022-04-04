@@ -5,7 +5,7 @@
 #include "DataController.h"
 
 //default constructor
-DataController::DataController(bool debug, float period) : PERIOD(period)
+DataController::DataController(bool debug, unsigned long period) : PERIOD(period)
 {
   bDebug = debug;
   _avgDistance = 0.0f;

@@ -36,10 +36,7 @@ WheelData wheels(false, 100L);
 //scheduler timer. time at the start of the cycle. Updated when all routines finished
 unsigned long t1 = 0L;
 
-/* environment data */
-
-//wall constants
-enum eWall { NONE, LEFT, CENTER, RIGHT};
+enum eWall { NONE, LEFT, RIGHT };
 
 // target distances in respect to the angles in servo.headPositions[]
 const float TGT_DISTANCES[POS_LEN] = { 80.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f , 0.0f };
@@ -50,10 +47,16 @@ float distances[POS_LEN] = { };
 // container for the error of each angle
 float errors[POS_LEN] = { };
 
+// container for the PID outputs
+float corrections[POS_LEN] = { };
+
 // the setup function runs once when you press reset or power the board
-void setup() {
+void setup() { 
+
   Serial.begin(9600); 
   Serial.println(); //newline
+
+  data.wallTarget = eWall::NONE;
 
   servoData.ready = true;
   us.ready = false;
@@ -92,6 +95,15 @@ void loop() {
     //fetch from US, and get a moving avg from data
     data.calcRollingAvg(us.getPingDistance(), us.getPingsSent());
 
+    // mark this routine as complete
+    if (us.getPingsSent() >= PINGS_PER_ANGLE)
+    {
+      data.resetRollingAvg();
+      us.setPingsSent(0);
+      us.ready = false;
+      data.ready = true;
+    }
+
     //store last time ran
     us.t2 = t1;
 
@@ -99,28 +111,52 @@ void loop() {
   }
 
   // after all pings have sent, write the average to the array
-  if (us.getPingsSent() >= PINGS_PER_ANGLE)
+  else if (data.ready)
   {
-    us.setPingsSent(0);
-    us.ready = false;
-
-    //push to distances Arr and reset
     distances[servoData.getPosition()] = data.getAvgDistance();
-    data.resetRollingAvg();
+
+    // pick a wall to follow
+    // hack bad way to see if a sweep was fully complete
+    if (data.wallTarget == eWall::NONE && distances[0] != 0.0f && distances[6] != 0.0f)
+    {
+      data.wallTarget = (distances[0] <= distances[6]) ? eWall::LEFT : eWall::RIGHT;
+    }
+
+
+    // calculate the current error
+    sidePID.setCurrentError(distances[servoData.getPosition()], TGT_DISTANCES[servoData.getPosition()]);
+
+    // store in error array 
+    errors[servoData.getPosition()] = sidePID.getCurrentError();
+
+
+    // left side pid correction
+    if (servoData.getPosition() < 2)
+    {
+      corrections[0] = sidePID.calculatePID(errors[0]);
+      corrections[1] = sidePID.calculatePID(errors[1]);
+    }
+
+    //fwd pid correction
+    else if (servoData.getPosition() < 5)
+    {
+      corrections[2] = fwdPID.calculatePID(errors[2]);
+      corrections[3] = fwdPID.calculatePID(errors[3]);
+      corrections[4] = fwdPID.calculatePID(errors[4]);
+    }
+    
+    // right side correction
+    else if (servoData.getPosition() <= 6)
+    corrections[5] = sidePID.calculatePID(errors[5]);
+    corrections[6] = sidePID.calculatePID(errors[6]);
+
+    data.ready = false;
   }
+  
 
-  // pick side or front pid
-
-  // determine pid correction
-  // calculate the current error
-  sidePID.setCurrentError(distances[servoData.getPosition()], TGT_DISTANCES[servoData.getPosition()]);
-
-  // store in error array 
-  errors[servoData.getPosition()] = sidePID.getCurrentError();
-
-  // get pid correction
-  sidePID.calculatePID(errors[servoData.getPosition()]);
-
+  
+  
+ 
 }
 
 

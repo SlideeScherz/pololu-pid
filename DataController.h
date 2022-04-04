@@ -15,9 +15,11 @@ public:
 
   bool bDebug, ready;
 
-  const float PERIOD;
+  int wallTarget;
 
-  DataController(bool debug, float period);
+  const unsigned long PERIOD;
+
+  DataController(bool debug, unsigned long period);
 
   float getAvgDistance();
   
