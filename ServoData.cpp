@@ -47,11 +47,17 @@ void ServoData::sweepHead()
 //Output Data to serial monitor
 void ServoData::debug()
 {
-  Serial.print("[servo] ");
-  Serial.print("sweepingCW : ");
+  Serial.print("servo | ");
+  Serial.print("ready ");
+  Serial.print(ready);
+  Serial.print(",");
+  Serial.print(waiting);
+  Serial.print("| t2: ");
+  Serial.print(t2);
+  Serial.print(" | sweepingCW: ");
   Serial.print(sweepingCW);
-  Serial.print(" angle: ");
+  Serial.print(" | angle: ");
   Serial.print(_angle);
-  Serial.print(" position: ");
+  Serial.print(" | position: ");
   Serial.println(_position);
 }

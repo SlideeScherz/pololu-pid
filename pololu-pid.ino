@@ -2,6 +2,10 @@
  Name:		pololu_pid.ino
  Created:	4/3/2022 4:00:33 PM
  Author:	Scott Scherzer
+
+ Wheelspeed will be initialized to zero.
+ After the head servo does a full sweep the data controller will decide what wall to follow
+
 */
 
 #include <Pololu3piPlus32U4OLED.h>
@@ -23,7 +27,7 @@ constexpr int PINGS_PER_ANGLE = 20;
 constexpr float MAX_DISTANCE = 200.0f;
 constexpr float US_MIN_DISTANCE = 2.0f;
 
-Ultrasonic us(true, 1L, 22, 21);
+Ultrasonic us(false, 1L, 22, 21);
 DataController data(false, 100L);
 
 PID sidePID(false, 60L); // period a bit after ping
@@ -38,28 +42,28 @@ unsigned long t1 = 0L;
 
 enum eWall { NONE, LEFT, RIGHT };
 
-// target distances in respect to the angles in servo.headPositions[]
-const float TGT_DISTANCES[POS_LEN] = { 80.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f , 0.0f };
+// target distances 
+const float TGT_DISTANCES[POS_LEN] = { 80.0f, 100.0f, 30.0f, 15.0f, 30.0f, 100.0f, 80.0f };
 
 // container for last average distance of each angle
 float distances[POS_LEN] = { };
-
-// container for the error of each angle
-float errors[POS_LEN] = { };
-
-// container for the PID outputs
-float corrections[POS_LEN] = { };
 
 // the setup function runs once when you press reset or power the board
 void setup() { 
 
   Serial.begin(9600); 
-  Serial.println(); //newline
+  Serial.println(""); //newline
 
   data.wallTarget = eWall::NONE;
 
+  // set 45 and 135 to NULL to show they havent been seen yet
+  distances[0] = NULL;
+  distances[6] = NULL;
+
   servoData.ready = true;
+  servoData.waiting = false;
   us.ready = false;
+  data.ready = false;
 }
 
 // the loop function runs over and over again until power down or reset
@@ -69,26 +73,42 @@ void loop() {
   //get current time
   t1 = millis();
 
+  servoData.debug();
+  us.debug();
+  data.debug();
+ 
+  Serial.print("dist  | ");
+  for (int i = 0; i < 7; i++)
+  {
+    Serial.print(distances[i]);
+    Serial.print(" | ");
+  }
+  Serial.println("");
+
   // poll servo
   if (servoData.ready)
   {
     servoData.sweepHead();
     //headServo.write(angle);
 
-    servoData.t2 = t1;
+    servoData.ready = false;
+    servoData.waiting = true;
 
-    //allow servo to finish its sweep
-    if (t1 > servoData.t2 + servoData.PERIOD)
-    {
-      servoData.ready = false;
-      us.ready = true;
-    }
+    servoData.t2 = t1;
+  }
+
+  // delay to allow servo to finish its sweep, and delay before calling ping
+  else if (t1 > (servoData.t2 + servoData.PERIOD) && servoData.waiting)
+  {
+    servoData.waiting = false;
+    us.ready = true;
+    
   }
 
   //send one ping, write to correct index
-  //if servo is moving, it will set ultrasonic status to waiting
   else if (t1 > us.t2 + us.PERIOD && us.ready)
   {
+
     //send ping
     us.setPingDistance();
 
@@ -98,16 +118,15 @@ void loop() {
     // mark this routine as complete
     if (us.getPingsSent() >= PINGS_PER_ANGLE)
     {
-      data.resetRollingAvg();
+      
       us.setPingsSent(0);
+
       us.ready = false;
       data.ready = true;
     }
 
     //store last time ran
     us.t2 = t1;
-
-    if (us.bDebug) us.debug();
   }
 
   // after all pings have sent, write the average to the array
@@ -115,48 +134,27 @@ void loop() {
   {
     distances[servoData.getPosition()] = data.getAvgDistance();
 
-    // pick a wall to follow
-    // hack bad way to see if a sweep was fully complete
-    if (data.wallTarget == eWall::NONE && distances[0] != 0.0f && distances[6] != 0.0f)
-    {
-      data.wallTarget = (distances[0] <= distances[6]) ? eWall::LEFT : eWall::RIGHT;
-    }
-
+    //after we store the avg clear the members
+    data.resetRollingAvg();
 
     // calculate the current error
     sidePID.setCurrentError(distances[servoData.getPosition()], TGT_DISTANCES[servoData.getPosition()]);
 
-    // store in error array 
-    errors[servoData.getPosition()] = sidePID.getCurrentError();
+    // fwd pid correction
+    //fwdCorrection = fwdPID.calculatePID(fwdPID.getCurrentError());
 
-
-    // left side pid correction
-    if (servoData.getPosition() < 2)
-    {
-      corrections[0] = sidePID.calculatePID(errors[0]);
-      corrections[1] = sidePID.calculatePID(errors[1]);
-    }
-
-    //fwd pid correction
-    else if (servoData.getPosition() < 5)
-    {
-      corrections[2] = fwdPID.calculatePID(errors[2]);
-      corrections[3] = fwdPID.calculatePID(errors[3]);
-      corrections[4] = fwdPID.calculatePID(errors[4]);
-    }
-    
-    // right side correction
-    else if (servoData.getPosition() <= 6)
-    corrections[5] = sidePID.calculatePID(errors[5]);
-    corrections[6] = sidePID.calculatePID(errors[6]);
+    // side pid corrections
+    //sideCorrection = sidePID.calculatePID(sidePID.getCurrentError());
 
     data.ready = false;
   }
-  
-
-  
-  
- 
+   
+  // dont adjust wheels yet if we havent seen both sides
+  else if (distances[0] == NULL || distances[6] == NULL)
+  {
+    servoData.ready = true;
+    return;
+  }
 }
 
 

@@ -21,7 +21,7 @@ public:
   // frequency between sweeps
   const unsigned long PERIOD;
 
-  bool bDebug, ready;
+  bool bDebug, ready, waiting;
 
   ServoData(bool debug, unsigned long period, int pin);
 
@@ -30,6 +30,8 @@ public:
   int getPosition();
 
   void sweepHead();
+
+  void debug();
 
 private:
 
@@ -45,8 +47,6 @@ private:
 
   //direction servo is sweeping
   bool sweepingCW;
-
-  void debug();
 };
 
 #endif

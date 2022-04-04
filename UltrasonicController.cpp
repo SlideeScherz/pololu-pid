@@ -45,10 +45,16 @@ int Ultrasonic::getPingsSent() { return _pingsSent; }
  */
 void Ultrasonic::debug()
 {
-  Serial.print("[US] ");
-  Serial.print("TOF: ");
+  Serial.print("us    | ");
+  Serial.print("ready: ");
+  Serial.print(ready);
+  Serial.print(" | t2: ");
+  Serial.print(t2);
+  Serial.print(" | pings: ");
+  Serial.print(_pingsSent);
+  Serial.print(" | TOF: ");
   Serial.print(pingTimeDuration);
-  Serial.print(" CM: ");
+  Serial.print(" | CM: ");
   Serial.println(_pingDistance);
 }
 

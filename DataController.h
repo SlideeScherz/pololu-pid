@@ -27,6 +27,8 @@ public:
 
   void calcRollingAvg(float data, int dataLen);
 
+  void debug();
+
 private:
 
   // used for deriving the rolling average of distances read by US
