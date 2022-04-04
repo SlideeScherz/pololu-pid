@@ -23,15 +23,29 @@ public:
   //Hardware pins to MOBO
   const int TRIG_PIN, ECHO_PIN;
 
+  // scheduler data. last time ran 
+  unsigned long t2; 
+  
   Ultrasonic(bool debug, unsigned long period, int triggerPin, int echoPin);
 
   void setPingDistance();
 
   float getPingDistance();
 
+  void setStatus(int value);
+
+  int getStatus();
+
+  void setPingsSent(int value);
+
+  int getPingsSent();
+
   void debug();
 
 private:
+
+  // scheduler data
+  int _status, _pingsSent; 
 
   //round trip distance of a ping derived from timeDiration, in CM
   float _pingDistance;

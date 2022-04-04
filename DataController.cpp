@@ -5,7 +5,7 @@
 #include "DataController.h"
 
 //default constructor
-DataController::DataController(bool debug)
+DataController::DataController(bool debug, float period) : PERIOD(period)
 {
   bDebug = debug;
   _avgDistance = 0.0f;
@@ -33,13 +33,13 @@ void DataController::resetRollingAvg()
  * @param itr current element in array. Used to divide for rolling average
  * @returns void. sets the _avgDistance member
  */
-void DataController::calcRollingAvg(float data, int index)
+void DataController::calcRollingAvg(float data, int dataLen)
 {
   //accumulatr the distance sum
   distanceAcc += data;
 
   //get rolling average 
-  _avgDistance = distanceAcc / (index + 1);
+  _avgDistance = distanceAcc / dataLen;
 }
 
 // accesser for allDistances
@@ -53,3 +53,7 @@ void DataController::allDistancesWrite(float data, int atIndex)
 {
   allDistances[atIndex] = data;
 }
+
+void DataController::setStatus(int status) { _status = status; }
+
+int DataController::getStatus() { return _status; }

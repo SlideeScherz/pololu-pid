@@ -9,7 +9,6 @@
 	#include "WProgram.h"
 #endif
 
-
 class ServoData
 {
 public:
@@ -49,7 +48,6 @@ private:
   bool sweepingCW;
 
   void debug();
-
 };
 
 #endif

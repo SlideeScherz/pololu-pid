@@ -15,19 +15,29 @@ public:
 
 	bool bDebug;
 
-  DataController(bool debug);
+  int t2;
+
+  const float PERIOD;
+
+  DataController(bool debug, float period);
 
   float getAvgDistance();
   
   void resetRollingAvg();
 
-  void calcRollingAvg(float data, int currentIndex);
+  void calcRollingAvg(float data, int dataLen);
 
   float allDistancesRead(int atIndex);
 
   void allDistancesWrite(float data, int atIndex);
 
+  void setStatus(int status);
+
+  int getStatus();
+
 private:
+
+  int _status;
 
   //Used for deriving the rolling average of distances read by US
   float _avgDistance, distanceAcc;
