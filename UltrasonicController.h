@@ -14,7 +14,7 @@ class Ultrasonic
 {
 public:
 
-  bool bDebug, ready;
+  bool bDebug;
 
   // milliseconds interval for scheduler
   const unsigned long PERIOD; 
@@ -22,9 +22,6 @@ public:
   //Hardware pins to MOBO
   const int TRIG_PIN, ECHO_PIN;
 
-  // scheduler data. last time ran 
-  unsigned long t2; 
- 
   Ultrasonic(bool debug, unsigned long period, int triggerPin, int echoPin);
 
   void setPingDistance();

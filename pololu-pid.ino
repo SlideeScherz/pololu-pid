@@ -3,9 +3,6 @@
  Created:	4/3/2022 4:00:33 PM
  Author:	Scott Scherzer
 
- Wheelspeed will be initialized to zero.
- After the head servo does a full sweep the data controller will decide what wall to follow
-
 */
 
 #include <Servo.h>
@@ -29,23 +26,25 @@ constexpr float US_MIN_DISTANCE = 2.0f;
 
 Servo headServo;
 Motors motors;
-
 Ultrasonic us(false, 1L, 22, 21);
-DataController data(false, 100L);
-
-PID sidePID(false, 60L, 9.0f); // period a bit after ping
-PID fwdPID(false, 100L); // period a bit after ping
 
 /* These are only for data. Dont manipulate any hardware */
-ServoData servoData(false, 100L, 20);
+ServoData servoData(false, 80L, 20);
+DataController data(false, 100L);
+PID sidePID(false, 50L); // period a bit after ping
+PID fwdPID(false, 50L); // period a bit after ping
+
+// if the servo is moving, make the US wait
+bool servoMoving = false;
 
 // timers
 unsigned long servoTimer1 = 0L, servoTimer2 = 0L;
 unsigned long usTimer1 = 0L, usTimer2 = 0L;
 unsigned long motorTimer1 = 0L, motorTimer2 = 0L;
+unsigned long pidTimer1 = 0L, pidTimer2 = 0L;
 
 //motor data
-const unsigned long MOTOR_PERIOD = 20L;
+const unsigned long MOTOR_PERIOD = 50L;
 const int MIN_SPEED = 40;
 const int MAX_SPEED = 100;
 int leftSpeed = MIN_SPEED, rightSpeed = MIN_SPEED;
@@ -60,8 +59,8 @@ float distances[POS_LEN] = { };
 float left1Correction = 0.0f, left2Correction = 0.0f, fwdCorrection = 0.0f;
 
 // the setup function runs once when you press reset or power the board
-void setup() { 
-
+void setup() 
+{ 
   Serial.begin(9600); 
   Serial.println(""); //newline
 
@@ -72,21 +71,15 @@ void setup() {
   headServo.write(90);
 
   delay(1000);
-
-  servoData.ready = true;
-  servoData.waiting = false;
-  us.ready = false;
-  data.ready = false;
 }
 
 // the loop function runs over and over again until power down or reset
 // choose which routine to run based on time elapsed since start of cycle
-void loop() {
-
+void loop() 
+{
   setServo();
   readUltrasonic();
-  filterData();
-
+  pidCorrection();
   setMotorsSpeeds();
 }
 
@@ -95,27 +88,20 @@ void setServo()
   servoTimer1 = millis();
 
   // poll servo
-  if (servoData.ready)
+  if (servoTimer1 > servoTimer2 + servoData.PERIOD && !servoMoving)
   {
-    //HACK
-    data.resetRollingAvg();
-
+    servoMoving = true; //HACK move to servoData
     servoData.sweepHead();
     headServo.write(servoData.getAngle());
-
-    servoData.ready = false;
-    servoData.waiting = true;
-
+    
+    //store last time ran
     servoTimer2 = servoTimer1;
   }
 
-  // delay to allow servo to finish its sweep, and delay before calling ping
-  else if (servoTimer1 > (servoTimer2 + servoData.PERIOD) && servoData.waiting)
+  // allow another cycle then, reset to false
+  else if (servoTimer1 > servoTimer2 + servoData.PERIOD && servoMoving)
   {
-    //servoData.debug();
-    
-    servoData.waiting = false;
-    us.ready = true;
+    servoMoving = false;
   }
 }
 
@@ -124,7 +110,7 @@ void readUltrasonic()
   usTimer1 = millis();
 
   //send one ping, write to correct index
-  if (usTimer1 > usTimer2 + us.PERIOD && us.ready)
+  if (usTimer1 > usTimer2 + us.PERIOD && !servoMoving)
   {
     //send ping
     us.setPingDistance();
@@ -135,11 +121,13 @@ void readUltrasonic()
     // mark this routine as complete
     if (us.getPingsSent() >= PINGS_PER_ANGLE)
     {
-
       us.setPingsSent(0);
 
-      us.ready = false;
-      data.ready = true;
+      // after all pings have sent, write the average to the array
+      distances[servoData.getPosition()] = data.getAvgDistance();
+
+      //after we store the avg clear the members
+      data.resetRollingAvg();
 
       //us.debug();
     }
@@ -149,32 +137,31 @@ void readUltrasonic()
   }
 }
 
-void filterData()
+void pidCorrection()
 {
-  // after all pings have sent, write the average to the array
-  if (data.ready)
-  {
-    distances[servoData.getPosition()] = data.getAvgDistance();
+  pidTimer1 = millis();
 
-    //after we store the avg clear the members
-    //data.resetRollingAvg();
+  if (pidTimer1 > pidTimer2 + sidePID.PERIOD)
+  {
 
     // side pid corrections
     sidePID.setCurrentError(distances[0], TGT_DISTANCES[0]);
     left1Correction = sidePID.calculatePID(sidePID.getCurrentError());
 
+    sidePID.setCurrentError(distances[1], TGT_DISTANCES[1]);
+    left2Correction = sidePID.calculatePID(sidePID.getCurrentError());
+
     // fwd pid correction
     fwdPID.setCurrentError(distances[4], TGT_DISTANCES[4]);
     fwdCorrection = fwdPID.calculatePID(fwdPID.getCurrentError());
-
-    //HACK change to motors
-    data.ready = false;
-    servoData.ready = true;
 
     //data.debug();
     //sidePID.debug();
     //fwdPID.debug();
     //debugDistances();
+  
+    //store last time ran
+    pidTimer2 = pidTimer1;
   }
 }
 
@@ -185,11 +172,14 @@ void setMotorsSpeeds()
 
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
+    // turn right 
     if (left1Correction < 0)
     {
       leftSpeed++;
       rightSpeed = MIN_SPEED;
     }
+
+    //turn left
     else
     {
       leftSpeed = MIN_SPEED;
@@ -202,6 +192,7 @@ void setMotorsSpeeds()
       leftSpeed = MIN_SPEED;
       rightSpeed++;
     }
+
     motors.setSpeeds(leftSpeed, rightSpeed);
     motorTimer2 = motorTimer1;
   }

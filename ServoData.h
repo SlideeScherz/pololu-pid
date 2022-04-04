@@ -16,12 +16,10 @@ public:
   // hardware pin assignment
   const int PIN;
 
-  unsigned long t2;
-
   // frequency between sweeps
   const unsigned long PERIOD;
 
-  bool bDebug, ready, waiting;
+  bool bDebug;
 
   ServoData(bool debug, unsigned long period, int pin);
 

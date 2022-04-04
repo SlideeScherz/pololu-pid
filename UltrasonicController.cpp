@@ -21,7 +21,6 @@ Ultrasonic::Ultrasonic(bool debug, unsigned long period, int triggerPin, int ech
   pinMode(ECHO_PIN, INPUT);
 
   //set defaults
-  t2 = 0L;
   _pingsSent = 0;
 }
 
@@ -46,10 +45,6 @@ int Ultrasonic::getPingsSent() { return _pingsSent; }
 void Ultrasonic::debug()
 {
   Serial.print("us    | ");
-  Serial.print("ready: ");
-  Serial.print(ready);
-  Serial.print(" | t2: ");
-  Serial.print(t2);
   Serial.print(" | pings: ");
   Serial.print(_pingsSent);
   Serial.print(" | TOF: ");

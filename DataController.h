@@ -13,9 +13,7 @@ class DataController
 {
 public:
 
-  bool bDebug, ready;
-
-  int wallTarget;
+  bool bDebug;
 
   const unsigned long PERIOD;
 

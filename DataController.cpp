@@ -42,12 +42,8 @@ void DataController::calcRollingAvg(float data, int dataLen)
 void DataController::debug()
 {
   Serial.print("data  | ");
-  Serial.print("ready: ");
-  Serial.print(ready);
   Serial.print(" | avg: ");
   Serial.print(_avgDistance);
   Serial.print(" | acc: ");
   Serial.print(distanceAcc);
-  Serial.print(" | wall: ");
-  Serial.println(wallTarget);
 }
