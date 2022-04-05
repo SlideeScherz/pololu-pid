@@ -19,7 +19,9 @@ public:
   //interval period
   const unsigned long PERIOD;
 
-  PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f);
+  float KP = 0.0f, KI = 0.0f, KD = 0.0f;
+
+  PID(bool debug, unsigned long period);
 
   float calculatePID(float currentError);
 
@@ -33,9 +35,6 @@ private:
 
   // state of the current error vs the target
   float _currentError, prevError;
-
-  //coefficient constants
-  const float KP, KI, KD;
 
   //result objects for their respective methods
   float proportional, integral, derivative;

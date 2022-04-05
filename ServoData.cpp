@@ -56,7 +56,7 @@ void ServoData::sweepHead()
 void ServoData::debug()
 {
   Serial.print("servo | ");
-  Serial.print(" | sweepingCW: ");
+  Serial.print("sweepingCW: ");
   Serial.print(sweepingCW);
   Serial.print(" | angle: ");
   Serial.print(_angle);

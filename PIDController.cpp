@@ -12,8 +12,8 @@
  * @param kD (optional) the derivative coefficient. Default: 0
  * @param kiLimit (optional) Max KI to prevent integral windup. Default: 100
  */
-PID::PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f) :
-  PERIOD(period), KP(kP), KI(kI), KD(kD)
+PID::PID(bool debug, unsigned long period) :
+  PERIOD(period)
 {
   bDebug = debug;
  
@@ -34,7 +34,8 @@ float PID::calculatePID(float currentError)
   setIntegral(currentError);
   setDerivative(currentError, prevError);
 
-  setPrevError(currentError);
+  prevError = _currentError;
+
   return proportional + integral + derivative;
 }
 
@@ -54,31 +55,23 @@ float PID::getCurrentError() { return _currentError; }
 // output state to serial monitor
 void PID::debug()
 {
-  Serial.print("[PID] ");
+  Serial.print("PID | ");
 
   Serial.print("error: ");
   Serial.print(_currentError);
 
-  Serial.print(" P: ");
+  Serial.print(" | P: ");
   Serial.print(proportional);
 
-  Serial.print(" I: ");
+  Serial.print(" | I: ");
   Serial.print(integral);
 
-  Serial.print(" D: ");
+  Serial.print(" | D: ");
   Serial.print(derivative);
 
-  Serial.print(" PID=> : ");
+  Serial.print(" | output : ");
   Serial.println(proportional + integral + derivative);
 }
-
-/**  
- * write the current error to the previous error
- * Called once the pid has completed
- * @param currentError current error passed in from setCurrentError
- * @returns void. Set the prevError private member
- */
-void PID::setPrevError(float currentError) { prevError = currentError; }
 
 // set the proportional error from the current error
 void PID::setProportional(float currentError)

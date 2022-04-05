@@ -36,11 +36,9 @@ float Ultrasonic::getPingDistance() { return _pingDistance; }
 void Ultrasonic::debug()
 {
   Serial.print("us    | ");
-  Serial.print(" | pings: ");
-  Serial.print(_pingsSent);
-  Serial.print(" | TOF: ");
+  Serial.print("TOF: ");
   Serial.print(pingTimeDuration);
-  Serial.print(" | CM: ");
+  Serial.print(" | distance: ");
   Serial.println(_pingDistance);
 }
 

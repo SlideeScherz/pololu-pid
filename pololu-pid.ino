@@ -13,7 +13,7 @@
 #include "UltrasonicController.h"
 #include "PIDController.h"
 #include "ServoData.h"
-#include "DataController.h"
+//#include "DataController.h"
 
 using namespace Pololu3piPlus32U4;
 
@@ -26,16 +26,12 @@ constexpr float US_MIN_DISTANCE = 2.0f;
 
 Servo headServo;
 Motors motors;
-Ultrasonic us(false, 1L, 22, 21);
+Ultrasonic us(false, 20L, 22, 21);
 
 /* These are only for data. Dont manipulate any hardware */
-ServoData servoData(false, 80L, 20);
-DataController data(false, 100L);
-PID sidePID(false, 50L); // period a bit after ping
-PID fwdPID(false, 50L); // period a bit after ping
-
-// if the servo is moving, make the US wait
-bool servoMoving = false;
+ServoData servoData(false, 20L, 20);
+// DataController data();
+PID pid(true, 50L); // period a bit after ping
 
 // timers
 unsigned long servoTimer1 = 0L, servoTimer2 = 0L;
@@ -46,29 +42,37 @@ unsigned long pidTimer1 = 0L, pidTimer2 = 0L;
 //motor data
 const unsigned long MOTOR_PERIOD = 50L;
 const int MIN_SPEED = 40;
-const int MAX_SPEED = 100;
+const int DEFAULT_SPEED = 75;
+const int MAX_SPEED = 150;
 int leftSpeed = MIN_SPEED, rightSpeed = MIN_SPEED;
 
 // target distances 
-const float TGT_DISTANCES[POS_LEN] = { 82.18f, 82.31f, 30.0f, 15.0f, 30.0f, 100.0f, 80.0f };
+const float TGT_LEFT = 80.0f;
+const float TGT_FWD = 20.0f;
+
+// pid containers
+float leftCorrection;
+float fwdCorrection;
 
 // container for last average distance of each angle
 float distances[POS_LEN] = { };
-
-// pid containers
-float left1Correction = 0.0f, left2Correction = 0.0f, fwdCorrection = 0.0f;
 
 // the setup function runs once when you press reset or power the board
 void setup() 
 { 
   Serial.begin(9600); 
-  Serial.println(""); //newline
 
   motors.flipLeftMotor(true);
   motors.flipRightMotor(true);
 
+  servoData.moving = false;
+
   headServo.attach(servoData.PIN);
-  headServo.write(90);
+  headServo.write(servoData.getAngle());
+
+  pid.KP = 0.6375f;
+  pid.KI = 0.0f;
+  pid.KD = 2.0f;
 
   delay(1000);
 }
@@ -88,20 +92,27 @@ void setServo()
   servoTimer1 = millis();
 
   // poll servo
-  if (servoTimer1 > servoTimer2 + servoData.PERIOD && !servoMoving)
+  if (servoTimer1 > servoTimer2 + 60L && !servoData.moving)
   {
-    servoMoving = true; //HACK move to servoData
+    servoData.moving = true; 
     servoData.sweepHead();
     headServo.write(servoData.getAngle());
     
-    //store last time ran
+    // store last time ran
     servoTimer2 = servoTimer1;
-  }
 
-  // allow another cycle then, reset to false
-  else if (servoTimer1 > servoTimer2 + servoData.PERIOD && servoMoving)
+    if (servoData.bDebug)
+    {
+      //Serial.print(headServo.read());
+      //Serial.print(" ");
+      servoData.debug();
+    }
+  }
+  // allow servo to finish sweep
+  else if (servoTimer1 > servoTimer2 + 40L && servoData.moving)
   {
-    servoMoving = false;
+    servoData.moving = false;
+    servoTimer2 = servoTimer1;
   }
 }
 
@@ -110,18 +121,15 @@ void readUltrasonic()
   usTimer1 = millis();
 
   //send one ping, write to correct index
-  if (usTimer1 > usTimer2 + us.PERIOD && !servoMoving)
+  if (usTimer1 > usTimer2 + 40L && !servoData.moving)
   {
     //send ping
     us.setPingDistance();
 
-    distances[servoData.getPosition()] = (distances[servoData.getPosition()] + us.getPingDistance()) / 2.0f;
+    distances[servoData.getPosition()] = us.getPingDistance();
     
-    // mark this routine as complete
-    if (us.getPingsSent() >= PINGS_PER_ANGLE)
-    {
+    if (us.bDebug) 
       us.debug();
-    }
 
     //store last time ran
     usTimer2 = usTimer1;
@@ -132,24 +140,17 @@ void pidCorrection()
 {
   pidTimer1 = millis();
 
-  if (pidTimer1 > pidTimer2 + sidePID.PERIOD)
+  if (pidTimer1 > pidTimer2 + pid.PERIOD && servoData.getPosition() == 0)
   {
 
     // side pid corrections
-    sidePID.setCurrentError(distances[0], TGT_DISTANCES[0]);
-    left1Correction = sidePID.calculatePID(sidePID.getCurrentError());
+    pid.setCurrentError(distances[0], TGT_LEFT);
+    leftCorrection = pid.calculatePID(pid.getCurrentError());
 
-    sidePID.setCurrentError(distances[1], TGT_DISTANCES[1]);
-    left2Correction = sidePID.calculatePID(sidePID.getCurrentError());
+    fwdCorrection = TGT_FWD - distances[4];
 
-    // fwd pid correction
-    fwdPID.setCurrentError(distances[4], TGT_DISTANCES[4]);
-    fwdCorrection = fwdPID.calculatePID(fwdPID.getCurrentError());
-
-    //data.debug();
-    //sidePID.debug();
-    //fwdPID.debug();
-    debugDistances();
+    //pid.debug();
+    //debugDistances();
   
     //store last time ran
     pidTimer2 = pidTimer1;
@@ -163,41 +164,22 @@ void setMotorsSpeeds()
 
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
-    if (left1Correction < 0)
-    {
-      leftSpeed += 10;
-      rightSpeed -= 10;
-    }
+    // turn left
+    if (leftCorrection < 0) {}
 
-    else if (left1Correction > 0)
-    {
-      leftSpeed -= 10;
-      rightSpeed += 10;
-    }
+    // turn right 
+    else if (leftCorrection > 0) {}
 
-    //too close, turn 
-    if (fwdCorrection > 0)
-    {
-      leftSpeed += 10;
-      rightSpeed -= 10;
-    }
-
-    //too far, speedup
-    //else if (fwdCorrection < 0)
-    //{
-    //  leftSpeed++;
-    //  rightSpeed++;
-    //}
+    // check fwd wall
+    if (fwdCorrection < 0) {}
 
     // check limits
-    if (leftSpeed >= MAX_SPEED) leftSpeed = MAX_SPEED;
     if (rightSpeed >= MAX_SPEED) rightSpeed = MAX_SPEED;
-    
-    if (leftSpeed <= MIN_SPEED) leftSpeed = MIN_SPEED;
-    if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
+    else if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
 
     // motors are flipped! swap the values
-    motors.setSpeeds(rightSpeed, leftSpeed);
+    motors.setSpeeds(rightSpeed, DEFAULT_SPEED);
+
     motorTimer2 = motorTimer1;
   }
 }

@@ -19,7 +19,7 @@ public:
   // frequency between sweeps
   const unsigned long PERIOD;
 
-  bool bDebug;
+  bool bDebug, moving;
 
   ServoData(bool debug, unsigned long period, int pin);
 
