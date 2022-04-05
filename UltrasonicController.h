@@ -28,16 +28,9 @@ public:
 
   float getPingDistance();
 
-  void setPingsSent(int value);
-
-  int getPingsSent();
-
   void debug();
 
 private:
-
-  // scheduler data
-  int _pingsSent; 
 
   //round trip distance of a ping derived from timeDiration, in CM
   float _pingDistance;

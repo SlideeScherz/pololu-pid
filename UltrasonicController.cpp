@@ -20,8 +20,6 @@ Ultrasonic::Ultrasonic(bool debug, unsigned long period, int triggerPin, int ech
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
-  //set defaults
-  _pingsSent = 0;
 }
 
 // call sendPing and assign the distance to pingDistance
@@ -29,13 +27,6 @@ void Ultrasonic::setPingDistance() { _pingDistance = sendPing(); }
 
 // access private member ping distance
 float Ultrasonic::getPingDistance() { return _pingDistance; }
-
-// public modifier
-void Ultrasonic::setPingsSent(int value) { _pingsSent = value; }
-
-//public acesser
-int Ultrasonic::getPingsSent() { return _pingsSent; }
-
 
 /**
  * output state to serial console
@@ -97,9 +88,6 @@ float Ultrasonic::sendPing()
 
   // Read echo pin and read second wave travel time
   pingTimeDuration = pulseIn(ECHO_PIN, HIGH, ECHO_TIMEOUT);
-
-  // inc
-  _pingsSent++;
 
   // calculate round trip time of flight
   return (pingTimeDuration * SPEED_OF_SOUND / 2.0f);

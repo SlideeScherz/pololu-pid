@@ -115,21 +115,12 @@ void readUltrasonic()
     //send ping
     us.setPingDistance();
 
-    //fetch from US, and get a moving avg from data
-    data.calcRollingAvg(us.getPingDistance(), us.getPingsSent());
+    distances[servoData.getPosition()] = (distances[servoData.getPosition()] + us.getPingDistance()) / 2.0f;
     
     // mark this routine as complete
     if (us.getPingsSent() >= PINGS_PER_ANGLE)
     {
-      us.setPingsSent(0);
-
-      // after all pings have sent, write the average to the array
-      distances[servoData.getPosition()] = data.getAvgDistance();
-
-      //after we store the avg clear the members
-      data.resetRollingAvg();
-
-      //us.debug();
+      us.debug();
     }
 
     //store last time ran
@@ -158,7 +149,7 @@ void pidCorrection()
     //data.debug();
     //sidePID.debug();
     //fwdPID.debug();
-    //debugDistances();
+    debugDistances();
   
     //store last time ran
     pidTimer2 = pidTimer1;
@@ -172,28 +163,41 @@ void setMotorsSpeeds()
 
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
-    // turn right 
     if (left1Correction < 0)
     {
-      leftSpeed++;
-      rightSpeed = MIN_SPEED;
+      leftSpeed += 10;
+      rightSpeed -= 10;
     }
 
-    //turn left
-    else
+    else if (left1Correction > 0)
     {
-      leftSpeed = MIN_SPEED;
-      rightSpeed++;
+      leftSpeed -= 10;
+      rightSpeed += 10;
     }
 
     //too close, turn 
     if (fwdCorrection > 0)
     {
-      leftSpeed = MIN_SPEED;
-      rightSpeed++;
+      leftSpeed += 10;
+      rightSpeed -= 10;
     }
 
-    motors.setSpeeds(leftSpeed, rightSpeed);
+    //too far, speedup
+    //else if (fwdCorrection < 0)
+    //{
+    //  leftSpeed++;
+    //  rightSpeed++;
+    //}
+
+    // check limits
+    if (leftSpeed >= MAX_SPEED) leftSpeed = MAX_SPEED;
+    if (rightSpeed >= MAX_SPEED) rightSpeed = MAX_SPEED;
+    
+    if (leftSpeed <= MIN_SPEED) leftSpeed = MIN_SPEED;
+    if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
+
+    // motors are flipped! swap the values
+    motors.setSpeeds(rightSpeed, leftSpeed);
     motorTimer2 = motorTimer1;
   }
 }

@@ -12,8 +12,8 @@
  * @param kD (optional) the derivative coefficient. Default: 0
  * @param kiLimit (optional) Max KI to prevent integral windup. Default: 100
  */
-PID::PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f, float kI_Limit = 500.0f) :
-  PERIOD(period), KP(kP), KI(kI), KD(kD), KI_LIMIT(kI_Limit)
+PID::PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f) :
+  PERIOD(period), KP(kP), KI(kI), KD(kD)
 {
   bDebug = debug;
  
@@ -90,6 +90,11 @@ void PID::setProportional(float currentError)
 void PID::setIntegral(float currentError)
 {
   KI_total += currentError;
+
+  if (KI_total > KI_LIMIT)
+  {
+    KI_total = KI_LIMIT;
+  }
 
   integral = KI * KI_total;
 }

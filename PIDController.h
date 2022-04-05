@@ -19,7 +19,7 @@ public:
   //interval period
   const unsigned long PERIOD;
 
-  PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f, float kI_Limit = 500.0f);
+  PID(bool debug, unsigned long period, float kP = 0.6375f, float kI = 0.0f, float kD = 0.0f);
 
   float calculatePID(float currentError);
 
@@ -44,7 +44,7 @@ private:
   float KI_total;
 
   //prevent integral windup
-  const float KI_LIMIT; //TUNE research a KI Limit
+  const float KI_LIMIT = 100.0f;
 
   void setPrevError(float currentError);
 
