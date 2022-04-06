@@ -6,14 +6,10 @@
 */
 
 #include <Servo.h>
-#include <Pololu3piPlus32U4OLED.h>
-#include <Pololu3piPlus32U4Motors.h>
-#include <Pololu3piPlus32U4Buzzer.h>
 #include <Pololu3piPlus32U4.h>
 #include "UltrasonicController.h"
 #include "PIDController.h"
 #include "ServoData.h"
-//#include "DataController.h"
 
 using namespace Pololu3piPlus32U4;
 
@@ -24,14 +20,14 @@ constexpr int PINGS_PER_ANGLE = 20;
 constexpr float MAX_DISTANCE = 200.0f;
 constexpr float US_MIN_DISTANCE = 2.0f;
 
+/* hardware init */
 Servo headServo;
 Motors motors;
 Ultrasonic us(false, 20L, 22, 21);
 
-/* These are only for data. Dont manipulate any hardware */
+/* these are only for data. dont manipulate any hardware */
 ServoData servoData(false, 20L, 20);
-// DataController data();
-PID pid(true, 50L); // period a bit after ping
+PID pid(true, 20L); // period a bit after ping
 
 // timers
 unsigned long servoTimer1 = 0L, servoTimer2 = 0L;
@@ -41,14 +37,14 @@ unsigned long pidTimer1 = 0L, pidTimer2 = 0L;
 
 //motor data
 const unsigned long MOTOR_PERIOD = 50L;
-const int MIN_SPEED = 40;
-const int DEFAULT_SPEED = 75;
+const int MIN_SPEED = 60;
+const int DEFAULT_SPEED = 100;
 const int MAX_SPEED = 150;
 int leftSpeed = MIN_SPEED, rightSpeed = MIN_SPEED;
 
 // target distances 
-const float TGT_LEFT = 80.0f;
-const float TGT_FWD = 20.0f;
+const float TGT_LEFT = 15.0f;
+const float TGT_FWD = 10.0f;
 
 // pid containers
 float leftCorrection;
@@ -65,13 +61,13 @@ void setup()
   motors.flipLeftMotor(true);
   motors.flipRightMotor(true);
 
-  servoData.moving = false;
+  //servoData.moving = false;
 
-  headServo.attach(servoData.PIN);
-  headServo.write(servoData.getAngle());
+  //headServo.attach(servoData.PIN);
+  //headServo.write(servoData.getAngle());
 
-  pid.KP = 0.6375f;
-  pid.KI = 0.0f;
+  pid.KP = 2.0f;
+  pid.KI = 2.0f;
   pid.KD = 2.0f;
 
   delay(1000);
@@ -81,10 +77,12 @@ void setup()
 // choose which routine to run based on time elapsed since start of cycle
 void loop() 
 {
-  setServo();
+  //TEMPTEST
+  //setServo();
   readUltrasonic();
   pidCorrection();
   setMotorsSpeeds();
+
 }
 
 void setServo()
@@ -126,10 +124,13 @@ void readUltrasonic()
     //send ping
     us.setPingDistance();
 
-    distances[servoData.getPosition()] = us.getPingDistance();
+    //TEMPTEST Side pid
+    //distances[servoData.getPosition()] = us.getPingDistance();
+    distances[0] = us.getPingDistance();
+
+    if (us.bDebug) us.debug();
     
-    if (us.bDebug) 
-      us.debug();
+    //debugDistances();
 
     //store last time ran
     usTimer2 = usTimer1;
@@ -147,17 +148,17 @@ void pidCorrection()
     pid.setCurrentError(distances[0], TGT_LEFT);
     leftCorrection = pid.calculatePID(pid.getCurrentError());
 
-    fwdCorrection = TGT_FWD - distances[4];
+    //fwdCorrection = TGT_FWD - distances[4];
 
-    //pid.debug();
-    //debugDistances();
-  
+    pid.debug();
+    
     //store last time ran
     pidTimer2 = pidTimer1;
   }
 }
 
 //WHEELS ARE FLIPPED
+
 void setMotorsSpeeds()
 {
   motorTimer1 = millis();
@@ -165,24 +166,35 @@ void setMotorsSpeeds()
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
     // turn left
-    if (leftCorrection < 0) {}
+    if (leftCorrection > 0)
+    {
+      leftSpeed = DEFAULT_SPEED;
+      rightSpeed = MIN_SPEED;
+    }
 
-    // turn right 
-    else if (leftCorrection > 0) {}
-
+    // turn right
+    else if (leftCorrection < 0)
+    {
+      leftSpeed = MIN_SPEED;
+      rightSpeed = DEFAULT_SPEED;
+    }
     // check fwd wall
-    if (fwdCorrection < 0) {}
+    //if (fwdCorrection < 0) {}
 
     // check limits
     if (rightSpeed >= MAX_SPEED) rightSpeed = MAX_SPEED;
     else if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
 
+    if (leftSpeed >= MAX_SPEED) leftSpeed = MAX_SPEED;
+    else if (leftSpeed <= MIN_SPEED) leftSpeed = MIN_SPEED;
+
     // motors are flipped! swap the values
-    motors.setSpeeds(rightSpeed, DEFAULT_SPEED);
+    motors.setSpeeds(rightSpeed, leftSpeed);
 
     motorTimer2 = motorTimer1;
   }
 }
+
 
 void debugDistances()
 {

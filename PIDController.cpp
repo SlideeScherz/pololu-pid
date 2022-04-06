@@ -84,12 +84,17 @@ void PID::setIntegral(float currentError)
 {
   KI_total += currentError;
 
-  if (KI_total > KI_LIMIT)
+  integral = KI * KI_total;
+
+  if (integral > KI_LIMIT)
   {
-    KI_total = KI_LIMIT;
+    integral = KI_LIMIT;
   }
 
-  integral = KI * KI_total;
+  else if (integral < KI_LIMIT * -1.0f)
+  {
+    integral = KI_LIMIT * -1.0f;
+  }
 }
 
 // get the delta of the last two errors to account for future error
