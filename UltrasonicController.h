@@ -30,7 +30,7 @@ public:
 
   float getPingDistance();
 
-  void debug();
+  void debug(char label[]);
 
 private:
 

@@ -20,6 +20,9 @@ PID::PID(bool debug, unsigned long period) :
   // defaults 
   _currentError = 0.0f;
   prevError = 0.0f;
+  proportional = 0.0f; 
+  integral = 0.0f;
+  derivative = 0.0f;
 }
 
 /**
@@ -35,7 +38,7 @@ float PID::calculatePID(float currentError)
   setDerivative(currentError, prevError);
   setPrevError(_currentError);
 
-  return proportional + integral + derivative;
+  return (proportional + integral + derivative);
 }
 
 /**
@@ -50,29 +53,24 @@ void PID::setCurrentError(float currentState, float targetState) { _currentError
 float PID::getCurrentError() { return _currentError; }
 
 // output state to serial monitor
-void PID::debug()
+void PID::debug(char label[])
 {
-  Serial.print("PID | ");
+  Serial.println(label);
 
-  Serial.print("curr error: ");
-  Serial.print(_currentError);
-
-  Serial.print(" | prev error: ");
-  Serial.print(_currentError);
-
-  Serial.print(" | P: ");
-  Serial.print(proportional);
-
-  Serial.print(" | I: ");
-  Serial.print(integral);
-
-  Serial.print(" | D: ");
-  Serial.print(derivative);
-
-  Serial.print(" | output : ");
-  Serial.println(proportional + integral + derivative);
+  Serial.print(" | curr error: "); Serial.print(_currentError);
+  Serial.print(" | prev error: "); Serial.print(_currentError);
+  Serial.print(" | P: "); Serial.print(proportional);
+  Serial.print(" | I: "); Serial.print(integral);
+  Serial.print(" | D: "); Serial.print(derivative);
+  Serial.print(" | output : "); Serial.print(proportional + integral + derivative);
+  Serial.print(" | T1: "); Serial.print(timer1);
+  Serial.print(" | T2: "); Serial.println(timer2);
 }
 
+/**
+ * write the current error to the previous error every cycle
+ * @param currentError the private current error member
+ */
 void PID::setPrevError(float currentError) { prevError = _currentError; }
 
 // set the proportional error from the current error
@@ -86,14 +84,10 @@ void PID::setIntegral(float currentError)
   integral = KI * KI_total;
 
   if (integral > KI_LIMIT)
-  {
     integral = KI_LIMIT;
-  }
-
+  
   else if (integral < KI_LIMIT * -1.0f)
-  {
     integral = KI_LIMIT * -1.0f;
-  }
 }
 
 // get the delta of the last two errors to account for future error

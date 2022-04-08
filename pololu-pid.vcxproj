@@ -73,7 +73,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\pololu-pid;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\Servo\src;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\Pololu3piPlus32U4\src;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\FastGPIO;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\Pushbutton;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\USBPause;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\PololuBuzzer\src;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\PololuHD44780;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\PololuOLED\src;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\\lib\gcc\avr\7.3.0\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\\lib\gcc\avr\7.3.0\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include-fixed;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include\avr;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\pololu-pid;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\Servo\src;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\Pololu3piPlus32U4\src;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\FastGPIO;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\Pushbutton;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\USBPause;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\PololuBuzzer\src;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\PololuHD44780;$(ProjectDir)..\..\..\OneDrive\Documents\Arduino\libraries\PololuOLED\src;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo;$(ProjectDir)..\POLOLU~1;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\\lib\gcc\avr\7.3.0\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\\lib\gcc\avr\7.3.0\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include-fixed;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include\avr;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ProjectDir)__vm\.pololu-pid.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <PreprocessorDefinitions>__AVR_atmega32u4__;__AVR_ATmega32U4__;__AVR_ATmega32u4__;_VMDEBUG=1;F_CPU=16000000L;ARDUINO=108019;ARDUINO_AVR_A_STAR_32U4;ARDUINO_ARCH_AVR;USB_VID=0x1ffb;USB_PID=0x2300;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -112,13 +112,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="constants.h" />
+    <ClInclude Include="DataController.h" />
     <ClInclude Include="PIDController.h" />
     <ClInclude Include="ServoData.h" />
     <ClInclude Include="UltrasonicController.h" />
     <ClInclude Include="__vm\.pololu-pid.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DataController.cpp" />
     <ClCompile Include="PIDController.cpp" />
     <ClCompile Include="ServoData.cpp" />
     <ClCompile Include="UltrasonicController.cpp" />

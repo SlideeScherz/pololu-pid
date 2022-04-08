@@ -33,7 +33,7 @@ public:
 
   float getCurrentError();
 
-  void debug();
+  void debug(char label[]);
 
 private:
 

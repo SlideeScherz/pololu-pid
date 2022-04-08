@@ -33,13 +33,14 @@ float Ultrasonic::getPingDistance() { return _pingDistance; }
  * you must first call setPingDistance()
  * @returns void. Prints to console
  */
-void Ultrasonic::debug()
+void Ultrasonic::debug(char label[])
 {
-  Serial.print("us    | ");
-  Serial.print("TOF: ");
-  Serial.print(pingTimeDuration);
-  Serial.print(" | distance: ");
-  Serial.println(_pingDistance);
+  Serial.println(label);
+
+  Serial.print(" | TOF: "); Serial.print(pingTimeDuration);
+  Serial.print(" | distance: "); Serial.print(_pingDistance);
+  Serial.print(" | T1: "); Serial.print(timer1);
+  Serial.print(" | T2: "); Serial.println(timer2);
 }
 
 /**

@@ -33,7 +33,7 @@
     <ClInclude Include="UltrasonicController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="constants.h">
+    <ClInclude Include="DataController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -45,6 +45,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UltrasonicController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DataController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

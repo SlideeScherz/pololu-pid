@@ -31,7 +31,7 @@ public:
 
   void sweepHead();
 
-  void debug();
+  void debug(char label[]);
 
 private:
 
