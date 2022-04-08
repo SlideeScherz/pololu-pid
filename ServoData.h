@@ -16,8 +16,10 @@ public:
   // hardware pin assignment
   const int PIN;
 
-  // frequency between sweeps
+  // milliseconds interval for scheduler
   const unsigned long PERIOD;
+  
+  unsigned long timer1, timer2;
 
   bool bDebug, moving;
 

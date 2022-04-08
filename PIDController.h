@@ -16,10 +16,14 @@ public:
 
   bool bDebug;
 
-  //interval period
+  // milliseconds interval for scheduler
   const unsigned long PERIOD;
+  
+  unsigned long timer1, timer2;
 
-  float KP = 0.0f, KI = 0.0f, KD = 0.0f;
+  float sideCorrection, fwdcorrection;
+
+  float KP = 0.0f, KI = 0.0f, KD = 0.0f; //HACK once tuned, make constant
 
   PID(bool debug, unsigned long period);
 
@@ -53,6 +57,4 @@ private:
 
   void setDerivative(float currentError, float prevError);
 };
-
 #endif
-

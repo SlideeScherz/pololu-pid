@@ -112,6 +112,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="constants.h" />
     <ClInclude Include="PIDController.h" />
     <ClInclude Include="ServoData.h" />
     <ClInclude Include="UltrasonicController.h" />

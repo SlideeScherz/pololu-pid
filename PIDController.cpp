@@ -33,8 +33,7 @@ float PID::calculatePID(float currentError)
   setProportional(currentError);
   setIntegral(currentError);
   setDerivative(currentError, prevError);
-
-  prevError = _currentError;
+  setPrevError(_currentError);
 
   return proportional + integral + derivative;
 }
@@ -45,11 +44,9 @@ float PID::calculatePID(float currentError)
  * @param targetState the target used to calculate error
  * @returns void. Set the current error private member
  */
-void PID::setCurrentError(float currentState, float targetState)
-{
-  _currentError = targetState - currentState;
-}
+void PID::setCurrentError(float currentState, float targetState) { _currentError = targetState - currentState; }
 
+// public accesser for current error
 float PID::getCurrentError() { return _currentError; }
 
 // output state to serial monitor
@@ -57,7 +54,10 @@ void PID::debug()
 {
   Serial.print("PID | ");
 
-  Serial.print("error: ");
+  Serial.print("curr error: ");
+  Serial.print(_currentError);
+
+  Serial.print(" | prev error: ");
   Serial.print(_currentError);
 
   Serial.print(" | P: ");
@@ -73,11 +73,10 @@ void PID::debug()
   Serial.println(proportional + integral + derivative);
 }
 
+void PID::setPrevError(float currentError) { prevError = _currentError; }
+
 // set the proportional error from the current error
-void PID::setProportional(float currentError)
-{
-  proportional = KP * currentError;
-}
+void PID::setProportional(float currentError) { proportional = KP * currentError; }
 
 // manage steady state error with the integral
 void PID::setIntegral(float currentError)
@@ -98,8 +97,5 @@ void PID::setIntegral(float currentError)
 }
 
 // get the delta of the last two errors to account for future error
-void PID::setDerivative(float currentError, float prevError)
-{
-  //store the last error after!
-  derivative = KD * (currentError - prevError);
-}
+// you must set the previous error after calling this.
+void PID::setDerivative(float currentError, float prevError) { derivative = KD * (currentError - prevError); }

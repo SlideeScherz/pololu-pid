@@ -9,7 +9,7 @@
 	#include "WProgram.h"
 #endif
 
-//Ultrasonic sensor on top of a moving servo
+// ultrasonic sensor on top of a moving servo
 class Ultrasonic
 {
 public:
@@ -17,7 +17,9 @@ public:
   bool bDebug;
 
   // milliseconds interval for scheduler
-  const unsigned long PERIOD; 
+  const unsigned long PERIOD;
+
+  unsigned long timer1, timer2;
 
   //Hardware pins to MOBO
   const int TRIG_PIN, ECHO_PIN;
