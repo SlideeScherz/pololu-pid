@@ -6,7 +6,7 @@ A wall following PID algorithm for Pololu 3pi+ OLED Robot
 
 ## Hardware and components
 
-Purchase this codebot bundle from [codingcoach.com](https://codingcoach.net/codebot) 
+**Purchase this codebot bundle from [codingcoach.com](https://codingcoach.net/codebot)** 
 - Includes all but Robot
 
 Purchase Pololu 3pi+ OLED Robot from [pololu.com](https://www.pololu.com/product/4976)
@@ -22,7 +22,7 @@ Specs:
 - Operating Voltage: DC 5V
 - Operating Current: 15mA
 - Operating Frequency: 40KHz
-- Trigger Input Signal: 10µS TTL pulse
+- Trigger Input Signal: 10ÂµS TTL pulse
 - Dimensions: 45 x 20 x 15mm
 
 ### Miuzei SG90 9G Servo Motor
@@ -30,14 +30,14 @@ Specs:
 Specs:
 
 - Dimensions: 23 x 12.2 x 29mm.
-- Working voltage: 3V – 6V
+- Working voltage: 3V â€“ 6V
 - Operating speed: 0.12second/ 60degree ( 4.8V no load )
 - Stall Torque (4.8V): 1.5kg/cm
-– Operable Temperature range: -30 to +60
+â€“ Operable Temperature range: -30 to +60
 - Dead band width: 7usec
-– Rotary Angle: 180°
-– Temperature range: -30 to +60
-– Servo Cable Length: 250mm.
+â€“ Rotary Angle: 180Â°
+â€“ Temperature range: -30 to +60
+â€“ Servo Cable Length: 250mm.
 - Weight: 9g/each.
 - Gear/Case Type: plastic/plastic.
 
