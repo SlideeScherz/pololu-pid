@@ -32,23 +32,20 @@ int ServoData::getPosition() { return _position; }
  */
 void ServoData::sweepHead()
 {
-  //algo to cycle through photos i used in a react.js project
-  //once we hit max, "bounce" the other way
-  //start 3. 4, 5, 6, then toggle
-  //after 1st pass: start 0. 1, 2, 3, 4, 5, 6 then toggle
+  // start at 0 then ascend
   if (sweepingCW)
   {
     _position = (7 + _position + 1) % 7;
-    if (_position == 6) sweepingCW = !sweepingCW;
+    if (_position == 6) sweepingCW = !sweepingCW; // check bounds
   }
-  //start 6. 5, 4, 3, 2, 1, 0 then toggle
+  // start at 6 then decend
   else
   {
     _position = (7 + _position - 1) % 7;
-    if (_position == 0) sweepingCW = !sweepingCW;
+    if (_position == 0) sweepingCW = !sweepingCW; // check bounds
   }
 
-  //update the currentAngle
+  // update the currentAngle
   _angle = HEAD_POSITIONS[_position];
 }
 
