@@ -4,18 +4,20 @@
  Author:	Scott Scherzer
 */
 
-#include <Servo.h>
 #include <Pololu3piPlus32U4.h>
-#include "DataController.h"
+#include <Servo.h>
 #include "UltrasonicController.h"
 #include "PIDController.h"
-#include "ServoData.h"
 
 using namespace Pololu3piPlus32U4;
 
 // HACK make these global 
-const int POS_LEN = 7, PINGS_PER_POS = 20;
+const int POS_LEN = 7;
 
+// TODO evalute if needed
+const int PINGS_PER_POS = 20;
+
+// TODO move to US controller
 // us reading data and pid limits
 const float US_MIN_DISTANCE = 2.0f, MAX_DISTANCE = 200.0f;
 
@@ -25,25 +27,46 @@ const int US_TRIG_PIN = 22, US_ECHO_PIN = 21, SERVO_PIN = 20;
 /* hardware init */
 Servo headServo;
 Motors motors;
-DataController data;
 Ultrasonic us(false, 10L, US_TRIG_PIN, US_ECHO_PIN);
-ServoData servoData(false, 50L, SERVO_PIN);
 PID pid(false, 20L); 
 
-/*
-//TODO timer1 is redundant for all classes
-Use use timer = millis() in main, and compare to each class last ran
-*/
+/* head servo data */
+// milliseconds interval for scheduler
+const unsigned long SERVO_PERIOD = 50UL;
 
-// HACK, move to class once tuned
+// timers for servo
+unsigned long servoTimer1, servoTimer2;
+
+// angle servo is currently facing
+int servoAngle = 90;
+
+// index of HEAD_POSITIONS array 
+int servoPos = 3;
+
+// debug switch 
+bool bDebugHeadServo = false; 
+
+// logic for servo sweeping right or left
+bool sweepingClockwise = true;
+
+// logic to stop US from sending pings if US is moving
+bool servoMoving = false;
+
+// legal head positions (angles) servo can point
+const int HEAD_POSITIONS[7] = { 135, 120, 105, 90, 75, 60, 45 };
+
+// position readings from each angle
+int distances[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+
 // motor data
 const unsigned long MOTOR_PERIOD = 50L;
+unsigned long motorTimer1 = 0L, motorTimer2 = 0L;
+
 const int MIN_SPEED = 60;
 const int DEFAULT_SPEED = 100;
 const int MAX_SPEED = 150;
 
-int leftSpeed = MIN_SPEED, rightSpeed = MIN_SPEED;
-unsigned long motorTimer1 = 0L, motorTimer2 = 0L;
+int leftSpeed = DEFAULT_SPEED, rightSpeed = DEFAULT_SPEED;
 
 // target distances 
 const float TGT_LEFT = 15.0f;
@@ -57,10 +80,8 @@ void setup()
   motors.flipLeftMotor(true);
   motors.flipRightMotor(true);
 
-  //servoData.moving = false;
-
-  //headServo.attach(servoData.PIN);
-  //headServo.write(servoData.getAngle());
+  headServo.attach(SERVO_PIN);
+  headServo.write(servoAngle);
 
   pid.KP = 2.0f;
   pid.KI = 2.0f;
@@ -70,7 +91,6 @@ void setup()
 }
 
 // the loop function runs over and over again until power down or reset
-// choose which routine to run based on time elapsed since start of cycle
 void loop() 
 {
   //setServo(); //TEMPTEST
@@ -81,27 +101,27 @@ void loop()
 
 void setServo()
 {
-  servoData.timer1 = millis();
+  servoTimer1 = millis();
 
   // poll servo
-  if (servoData.timer1 > servoData.timer2 + servoData.PERIOD && !servoData.moving)
+  if (servoTimer1 > servoTimer2 + SERVO_PERIOD && !servoMoving)
   {
-    servoData.moving = true; 
-    servoData.sweepHead();
-    headServo.write(servoData.getAngle());
+    servoMoving = true;
+    sweepHead();
+    headServo.write(servoAngle);
     
     // store last time ran
-    servoData.timer2 = servoData.timer1;
+    servoTimer2 = servoTimer1;
   }
 
   // allow servo to finish sweep
   // TUNE wait period
-  else if (servoData.timer1 > servoData.timer2 + 40L && servoData.moving)
+  else if (servoTimer1 > servoTimer2 + SERVO_PERIOD && servoMoving)
   {
-    servoData.moving = false;
-    servoData.timer2 = servoData.timer1;
+    servoMoving = false;
+    servoTimer2 = servoTimer1;
 
-    if (servoData.bDebug) servoData.debug("Head Servo");
+    if (bDebugHeadServo) headServoDebug("Head Servo");
   }
 }
 
@@ -110,13 +130,12 @@ void readUltrasonic()
   us.timer1 = millis();
 
   //send one ping, write to correct index
-  if (us.timer1 > us.timer2 + us.PERIOD && !servoData.moving)
+  if (us.timer1 > us.timer2 + us.PERIOD && !servoMoving)
   {
     //send ping
     us.setPingDistance();
 
-    //distances[servoData.getPosition()] = us.getPingDistance();
-    data.distances[0] = us.getPingDistance();
+    distances[servoPos] = us.getPingDistance();
 
     if (us.bDebug) us.debug("Ultrasonic");
     
@@ -131,10 +150,10 @@ void pidCorrection()
 {
   pid.timer1 = millis();
 
-  if (pid.timer1 > pid.timer2 + pid.PERIOD && servoData.getPosition() == 0)
+  if (pid.timer1 > pid.timer2 + pid.PERIOD && servoPos == 0)
   {
     // side pid corrections
-    pid.setCurrentError(data.distances[0], TGT_LEFT); //HACK make dynamic
+    pid.setCurrentError(distances[servoPos], TGT_LEFT); //HACK make dynamic
     pid.sideCorrection = pid.calculatePID(pid.getCurrentError());
 
     //pid.fwdCorrection = TGT_FWD - distances[4];
@@ -146,7 +165,6 @@ void pidCorrection()
   }
 }
 
-//TODO move to class
 void setMotorsSpeeds()
 {
   motorTimer1 = millis();
@@ -166,12 +184,49 @@ void setMotorsSpeeds()
   motorTimer2 = motorTimer1;
 }
 
+/**
+ * Simple controller to move head
+ * reads from headPositions
+ * @returns void. sets servo head to a position
+ */
+void sweepHead()
+{
+  // start at 0 then ascend
+  if (sweepingClockwise)
+  {
+    servoPos = (7 + servoPos + 1) % 7;
+    if (servoPos == 6) sweepingClockwise = !sweepingClockwise; // check bounds
+  }
+  // start at 6 then decend
+  else
+  {
+    servoPos = (7 + servoPos - 1) % 7;
+    if (servoPos == 0) sweepingClockwise = !sweepingClockwise; // check bounds
+  }
+
+  // TODO may not be used.
+  // update the currentAngle
+  servoAngle = HEAD_POSITIONS[servoPos];
+}
+
+//Output Data to serial monitor
+void headServoDebug(char label[])
+{
+  Serial.println(label);
+
+  Serial.print(" | sweepingCW: "); Serial.print(sweepingClockwise);
+  Serial.print(" | angle: "); Serial.print(servoAngle);
+  Serial.print(" | position: "); Serial.print(servoPos);
+  Serial.print(" | T1: "); Serial.print(servoTimer1);
+  Serial.println(" | T2: "); Serial.println(servoTimer2);
+}
+
 /*
  * set the LEDS to on or off.
  * @param (color)State 0 (off) or 1 (on)
  * @returns void. Sets the pololu LED pins
  */
-extern void setLEDs(int yellowState, int greenState, int redState) {
+void setLEDs(int yellowState, int greenState, int redState) {
   ledYellow(yellowState);
   ledGreen(greenState);
   ledRed(redState);

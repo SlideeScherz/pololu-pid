@@ -24,30 +24,18 @@
     <ClInclude Include="__vm\.pololu-pid.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ServoData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PIDController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UltrasonicController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DataController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ServoData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PIDController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UltrasonicController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DataController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
