@@ -16,45 +16,30 @@ public:
 
   bool bDebug;
 
-  // milliseconds interval for scheduler
-  const unsigned long PERIOD;
-  
-  unsigned long timer1, timer2;
-
   float sideCorrection, fwdcorrection;
 
-  float KP = 0.0f, KI = 0.0f, KD = 0.0f; //HACK once tuned, make constant
+  float currentError;
 
-  PID(bool debug, unsigned long period);
+  float KP, KI, KD; //HACK once tuned, make constant
+
+  PID(bool debug);
 
   float calculatePID(float currentError);
-
-  void setCurrentError(float currentState, float targetState);
-
-  float getCurrentError();
 
   void debug(char label[]);
 
 private:
 
   // state of the current error vs the target
-  float _currentError, prevError;
+  float prevError;
 
-  //result objects for their respective methods
-  float proportional, integral, derivative;
+  // result objects for gain
+  float KP_Res, KI_Res, KD_Res;
 
-  //sum of all errors
+  // sum of all errors
   float KI_total;
 
-  //prevent integral windup
-  const float KI_LIMIT = 100.0f;
-
-  void setPrevError(float currentError);
-
-  void setProportional(float currentError);
-
-  void setIntegral(float currentError);
-
-  void setDerivative(float currentError, float prevError);
+  // prevent integral windup
+  const float KI_LIMIT = 50.0f;
 };
 #endif

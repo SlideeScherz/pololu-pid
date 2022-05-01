@@ -25,7 +25,7 @@ const uint8_t US_TRIG_PIN = 22, US_ECHO_PIN = 21, SERVO_PIN = 20;
 Servo headServo;
 Motors motors;
 Ultrasonic us(false, 10L, US_TRIG_PIN, US_ECHO_PIN);
-PID pid(false, 20L); 
+PID pid(false); 
 
 /* head servo data */
 // milliseconds interval for scheduler
@@ -80,9 +80,9 @@ void setup()
   headServo.attach(SERVO_PIN);
   headServo.write(servoAngle);
 
-  pid.KP = 2.0f;
-  pid.KI = 2.0f;
-  pid.KD = 2.0f;
+  pid.KP = 1.0f;
+  pid.KI = 3.0f;
+  pid.KD = 0.2f;
 
   delay(1000);
 }
@@ -92,8 +92,7 @@ void loop()
 {
   //setServo(); //TEMPTEST
   readUltrasonic();
-  pidCorrection();
-  //setMotorsSpeeds();
+  setMotorsSpeeds();
 }
 
 void setServo()
@@ -139,42 +138,31 @@ void readUltrasonic()
   }
 }
 
-void pidCorrection()
-{
-  pid.timer1 = millis();
-
-  if (pid.timer1 > pid.timer2 + pid.PERIOD && servoPos == 0)
-  {
-    // side pid corrections
-    pid.setCurrentError(distances[servoPos], TGT_LEFT); //HACK make dynamic
-    pid.sideCorrection = pid.calculatePID(pid.getCurrentError());
-
-    //pid.fwdCorrection = TGT_FWD - distances[4];
-
-    if(pid.bDebug) pid.debug("side pid");
-    
-    //store last time ran
-    pid.timer2 = pid.timer1;
-  }
-}
-
 void setMotorsSpeeds()
 {
   motorTimer1 = millis();
 
-  rightSpeed = pid.sideCorrection;
+  if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
+  {
+    // side pid corrections
+    pid.currentError = distances[servoPos] - TGT_LEFT; //HACK make dynamic
 
-  // check limits
-  if (rightSpeed >= MAX_SPEED) rightSpeed = MAX_SPEED;
-  else if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
+    rightSpeed = pid.calculatePID(pid.currentError);
 
-  if (leftSpeed >= MAX_SPEED) leftSpeed = MAX_SPEED;
-  else if (leftSpeed <= MIN_SPEED) leftSpeed = MIN_SPEED;
+    // check limits
+    if (rightSpeed >= MAX_SPEED) rightSpeed = MAX_SPEED;
+    else if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
 
-  // motors are flipped! swap the values
-  motors.setSpeeds(rightSpeed, leftSpeed);
+    if (leftSpeed >= MAX_SPEED) leftSpeed = MAX_SPEED;
+    else if (leftSpeed <= MIN_SPEED) leftSpeed = MIN_SPEED;
 
-  motorTimer2 = motorTimer1;
+    // motors are flipped! swap the values
+    motors.setSpeeds(rightSpeed, leftSpeed);
+
+    if (pid.bDebug) pid.debug("side pid");
+
+    motorTimer2 = motorTimer1;
+  }
 }
 
 /**
