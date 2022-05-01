@@ -21,24 +21,19 @@ public:
 
   unsigned long timer1, timer2;
 
-  //Hardware pins to MOBO
-  const int TRIG_PIN, ECHO_PIN;
+  // hardware pins to MOBO
+  const uint8_t TRIG_PIN, ECHO_PIN;
 
-  Ultrasonic(bool debug, unsigned long period, int triggerPin, int echoPin);
+  // time in MICROSECONDS of round trip flight for ping to return 
+  unsigned long pingTimeDuration, pingDistance;
 
-  void setPingDistance();
+  Ultrasonic(bool debug, unsigned long period, uint8_t triggerPin, uint8_t echoPin);
 
-  float getPingDistance();
+  float sendPing();
 
   void debug(char label[]);
 
 private:
-
-  //round trip distance of a ping derived from timeDiration, in CM
-  float _pingDistance;
-
-  //time in MICROSECONDS of round trip flight for ping to return 
-  unsigned long pingTimeDuration;
 
   //used in pingDistance calculation
   const float SPEED_OF_SOUND = 0.034f;
@@ -49,12 +44,7 @@ private:
    * 400cm = (0.034 m/s)x 
    * x = 11764.705882 //TUNE
    */
-  const unsigned long ECHO_TIMEOUT = 38000L;
+  const unsigned long ECHO_TIMEOUT = 38000UL;
 
-  void chargeTriggerPin(unsigned int microSecondDelay = 0);
-
-  void clearTriggerPin(unsigned int microSecondDelay = 0);
-
-  float sendPing();
 };
 #endif

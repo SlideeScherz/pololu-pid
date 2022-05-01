@@ -14,15 +14,12 @@ using namespace Pololu3piPlus32U4;
 // HACK make these global 
 const int POS_LEN = 7;
 
-// TODO evalute if needed
-const int PINGS_PER_POS = 20;
-
 // TODO move to US controller
 // us reading data and pid limits
 const float US_MIN_DISTANCE = 2.0f, MAX_DISTANCE = 200.0f;
 
 // pin assignments 
-const int US_TRIG_PIN = 22, US_ECHO_PIN = 21, SERVO_PIN = 20;
+const uint8_t US_TRIG_PIN = 22, US_ECHO_PIN = 21, SERVO_PIN = 20;
 
 /* hardware init */
 Servo headServo;
@@ -133,14 +130,10 @@ void readUltrasonic()
   if (us.timer1 > us.timer2 + us.PERIOD && !servoMoving)
   {
     //send ping
-    us.setPingDistance();
-
-    distances[servoPos] = us.getPingDistance();
+    distances[servoPos] = us.sendPing();
 
     if (us.bDebug) us.debug("Ultrasonic");
     
-    //debugDistances();
-
     //store last time ran
     us.timer2 = us.timer1;
   }
@@ -209,7 +202,7 @@ void sweepHead()
   servoAngle = HEAD_POSITIONS[servoPos];
 }
 
-//Output Data to serial monitor
+// output data to serial monitor
 void headServoDebug(char label[])
 {
   Serial.println(label);
