@@ -11,25 +11,26 @@
 
 using namespace Pololu3piPlus32U4;
 
-// HACK make these global 
-const int POS_LEN = 7;
+// pin assignments 
+const uint8_t US_TRIG_PIN = 22, US_ECHO_PIN = 21, SERVO_PIN = 20;
+
+constexpr int POS_LEN = 7;
+
+const double SETPOINT = 15.0;
 
 // TODO move to US controller
 // us reading data and pid limits
-const float US_MIN_DISTANCE = 2.0f, MAX_DISTANCE = 200.0f;
-
-// pin assignments 
-const uint8_t US_TRIG_PIN = 22, US_ECHO_PIN = 21, SERVO_PIN = 20;
+const double US_MIN_DISTANCE = 2.0, MAX_DISTANCE = 200.0;
 
 /* hardware init */
 Servo headServo;
 Motors motors;
-Ultrasonic us(false, 10L, US_TRIG_PIN, US_ECHO_PIN);
+Ultrasonic us(false, 10ul, US_TRIG_PIN, US_ECHO_PIN);
 PID pid(false); 
 
 /* head servo data */
 // milliseconds interval for scheduler
-const unsigned long SERVO_PERIOD = 50UL;
+const unsigned long SERVO_PERIOD = 50ul;
 
 // timers for servo
 unsigned long servoTimer1, servoTimer2;
@@ -50,24 +51,20 @@ bool sweepingClockwise = true;
 bool servoMoving = false;
 
 // legal head positions (angles) servo can point
-const int HEAD_POSITIONS[7] = { 135, 120, 105, 90, 75, 60, 45 };
+const int HEAD_POSITIONS[POS_LEN] = { 45, 60, 75, 90, 105, 120, 135 };
 
 // position readings from each angle
-int distances[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+double distances[POS_LEN] = { };
 
 // motor data
-const unsigned long MOTOR_PERIOD = 50L;
-unsigned long motorTimer1 = 0L, motorTimer2 = 0L;
+const unsigned long MOTOR_PERIOD = 50ul;
+unsigned long motorTimer1, motorTimer2;
 
-const int MIN_SPEED = 60;
-const int DEFAULT_SPEED = 100;
+const int MIN_SPEED = 50;
+const int BASE_SPEED = 100;
 const int MAX_SPEED = 150;
 
-int leftSpeed = DEFAULT_SPEED, rightSpeed = DEFAULT_SPEED;
-
-// target distances 
-const float TGT_LEFT = 15.0f;
-const float TGT_FWD = 10.0f;
+int leftSpeed = BASE_SPEED, rightSpeed = BASE_SPEED;
 
 // the setup function runs once when you press reset or power the board
 void setup() 
@@ -80,9 +77,9 @@ void setup()
   headServo.attach(SERVO_PIN);
   headServo.write(servoAngle);
 
-  pid.KP = 1.0f;
-  pid.KI = 3.0f;
-  pid.KD = 0.2f;
+  pid.KP = 4.0;
+  pid.KI = 0.5;
+  pid.KD = 2.0;
 
   delay(1000);
 }
@@ -90,9 +87,18 @@ void setup()
 // the loop function runs over and over again until power down or reset
 void loop() 
 {
-  //setServo(); //TEMPTEST
+  setServo(); 
   readUltrasonic();
   setMotorsSpeeds();
+}
+
+// util methods
+int handleLimit(int value, int min, int max)
+{
+  if (value >= max) 
+    value = max;
+  else if (value <= min) 
+    value = min;
 }
 
 void setServo()
@@ -121,6 +127,29 @@ void setServo()
   }
 }
 
+/**
+ * Simple controller to move head
+ * reads from headPositions
+ * @returns void. sets servo head to a position
+ */
+void sweepHead()
+{
+  // toggle direction
+  if (servoPos == 6 || servoPos == 0)
+    sweepingClockwise = !sweepingClockwise;
+
+  // start at 0 then ascend
+  if (sweepingClockwise)
+    servoPos = (7 + servoPos + 1) % 7;
+
+  // start at 6 then decend
+  else
+    servoPos = (7 + servoPos - 1) % 7;
+
+  // update the currentAngle
+  servoAngle = HEAD_POSITIONS[servoPos];
+}
+
 void readUltrasonic()
 {
   us.timer1 = millis();
@@ -145,49 +174,22 @@ void setMotorsSpeeds()
   if (motorTimer1 > motorTimer2 + MOTOR_PERIOD)
   {
     // side pid corrections
-    pid.currentError = distances[servoPos] - TGT_LEFT; //HACK make dynamic
+    pid.currentError = distances[servoPos] - SETPOINT; 
 
-    rightSpeed = pid.calculatePID(pid.currentError);
+    pid.gain = pid.calculatePID(pid.currentError);
 
-    // check limits
-    if (rightSpeed >= MAX_SPEED) rightSpeed = MAX_SPEED;
-    else if (rightSpeed <= MIN_SPEED) rightSpeed = MIN_SPEED;
+    leftSpeed = BASE_SPEED - pid.gain;
+    rightSpeed = BASE_SPEED + pid.gain;
 
-    if (leftSpeed >= MAX_SPEED) leftSpeed = MAX_SPEED;
-    else if (leftSpeed <= MIN_SPEED) leftSpeed = MIN_SPEED;
+    leftSpeed = handleLimit(leftSpeed, MIN_SPEED, MAX_SPEED);
+    rightSpeed = handleLimit(rightSpeed, MIN_SPEED, MAX_SPEED);
 
-    // motors are flipped! swap the values
-    motors.setSpeeds(rightSpeed, leftSpeed);
+    motors.setSpeeds(leftSpeed, rightSpeed);
 
     if (pid.bDebug) pid.debug("side pid");
 
     motorTimer2 = motorTimer1;
   }
-}
-
-/**
- * Simple controller to move head
- * reads from headPositions
- * @returns void. sets servo head to a position
- */
-void sweepHead()
-{
-  // start at 0 then ascend
-  if (sweepingClockwise)
-  {
-    servoPos = (7 + servoPos + 1) % 7;
-    if (servoPos == 6) sweepingClockwise = !sweepingClockwise; // check bounds
-  }
-  // start at 6 then decend
-  else
-  {
-    servoPos = (7 + servoPos - 1) % 7;
-    if (servoPos == 0) sweepingClockwise = !sweepingClockwise; // check bounds
-  }
-
-  // TODO may not be used.
-  // update the currentAngle
-  servoAngle = HEAD_POSITIONS[servoPos];
 }
 
 // output data to serial monitor
@@ -202,13 +204,3 @@ void headServoDebug(char label[])
   Serial.println(" | T2: "); Serial.println(servoTimer2);
 }
 
-/*
- * set the LEDS to on or off.
- * @param (color)State 0 (off) or 1 (on)
- * @returns void. Sets the pololu LED pins
- */
-void setLEDs(int yellowState, int greenState, int redState) {
-  ledYellow(yellowState);
-  ledGreen(greenState);
-  ledRed(redState);
-}

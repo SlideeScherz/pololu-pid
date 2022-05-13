@@ -29,14 +29,14 @@ public:
 
   Ultrasonic(bool debug, unsigned long period, uint8_t triggerPin, uint8_t echoPin);
 
-  float sendPing();
+  double sendPing();
 
   void debug(char label[]);
 
 private:
 
   //used in pingDistance calculation
-  const float SPEED_OF_SOUND = 0.034f;
+  const double SPEED_OF_SOUND = 0.034;
 
   /**
    * MICROSECONDS to wait for ping to return

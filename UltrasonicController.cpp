@@ -26,7 +26,7 @@ Ultrasonic::Ultrasonic(bool debug, unsigned long period, uint8_t triggerPin, uin
  * Called by setPingDistance(), written to _pingDistance
  * @returns pingDistance.
  */
-float Ultrasonic::sendPing()
+double Ultrasonic::sendPing()
 {
   // set trigger pin to low voltage
   digitalWrite(TRIG_PIN, LOW);
@@ -43,7 +43,7 @@ float Ultrasonic::sendPing()
   pingTimeDuration = pulseIn(ECHO_PIN, HIGH, ECHO_TIMEOUT);
 
   // calculate round trip time of flight
-  return (pingTimeDuration * SPEED_OF_SOUND / 2.0f);
+  return (pingTimeDuration * SPEED_OF_SOUND / 2);
 }
 
 /**

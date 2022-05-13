@@ -16,30 +16,30 @@ public:
 
   bool bDebug;
 
-  float sideCorrection, fwdcorrection;
+  double gain;
 
-  float currentError;
+  double currentError;
 
-  float KP, KI, KD; //HACK once tuned, make constant
+  double KP, KI, KD; 
 
   PID(bool debug);
 
-  float calculatePID(float currentError);
+  double calculatePID(double currentError);
 
   void debug(char label[]);
 
 private:
 
   // state of the current error vs the target
-  float prevError;
+  double prevError;
 
   // result objects for gain
-  float KP_Res, KI_Res, KD_Res;
+  double kpRes, kiRes, kdRes;
 
   // sum of all errors
-  float KI_total;
+  double kiTotal;
 
   // prevent integral windup
-  const float KI_LIMIT = 50.0f;
+  const double KI_LIMIT = 50.0;
 };
 #endif
